@@ -3,208 +3,172 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>一擊入魂：情境配樂大師 v0.1</title>
+    <title>RGB 光學調色實驗室 v0.1</title>
     <style>
         :root {
-            --accent: #ff0055;
-            --cyber-blue: #00f2ff;
-            --bg: #0a0a0c;
+            --bg-color: #050505;
+            --panel-bg: #1a1a1a;
+            --text-color: #e0e0e0;
         }
 
         body {
             margin: 0; padding: 0;
-            background-color: var(--bg);
-            color: white;
-            font-family: 'PingFang TC', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            font-family: 'PingFang TC', 'Microsoft JhengHei', sans-serif;
             display: flex; flex-direction: column;
             height: 100vh; overflow: hidden;
+            touch-action: manipulation;
         }
 
-        /* 上半部：視覺任務區 */
-        #movie-canvas {
-            flex: 1.2;
+        /* 上半部：實驗展示區 */
+        #lab-view {
+            flex: 1.5;
             position: relative;
-            background: #111;
             display: flex; justify-content: center; align-items: center;
-            overflow: hidden;
-            border-bottom: 3px solid #333;
+            background: radial-gradient(circle at center, #111 0%, #000 100%);
+            border-bottom: 2px solid #333;
         }
 
-        #visual-scene {
-            width: 100%; height: 100%;
-            background: linear-gradient(45deg, #1a1a2e 0%, #16213e 100%);
-            display: flex; flex-direction: column; justify-content: center; align-items: center;
-            transition: filter 0.3s ease;
+        .dark-room {
+            position: relative;
+            width: 300px; height: 300px;
+            display: flex; justify-content: center; align-items: center;
         }
 
-        .rain-effect {
-            position: absolute; width: 100%; height: 100%;
-            background: repeating-linear-gradient(transparent, transparent 95%, rgba(255,255,255,0.1) 100%);
-            animation: rain 0.2s infinite linear;
+        /* 光束模擬 - 使用 mix-blend-mode 達成加色法 */
+        .light-beam {
+            position: absolute;
+            width: 180px; height: 180px;
+            border-radius: 50%;
+            filter: blur(15px);
+            mix-blend-mode: screen; /* 關鍵：模擬色光疊加 */
+            transition: opacity 0.4s ease;
+            opacity: 0;
         }
 
-        @keyframes rain { from { transform: translateY(0); } to { transform: translateY(20px); } }
+        #light-r { background: rgb(255, 0, 0); transform: translate(0, -40px); }
+        #light-g { background: rgb(0, 255, 0); transform: translate(-40px, 40px); }
+        #light-b { background: rgb(0, 0, 255); transform: translate(40px, 40px); }
 
-        #director-note {
-            position: absolute; top: 20px; right: 20px;
-            background: #f1c40f; color: #000;
-            padding: 10px 15px; width: 180px;
-            transform: rotate(2deg);
-            box-shadow: 5px 5px 15px rgba(0,0,0,0.5);
-            font-weight: bold; font-size: 13px;
-            z-index: 10;
+        /* 任務面板 */
+        #mission-card {
+            position: absolute; top: 20px; left: 20px;
+            background: rgba(40, 40, 40, 0.8);
+            border: 1px solid #444; border-radius: 8px;
+            padding: 12px 20px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
         }
 
-        /* 下半部：互動混音台 */
-        #mixer-panel {
+        #mission-target {
+            color: #ffcc00; font-weight: bold; font-size: 1.2rem;
+            text-shadow: 0 0 5px rgba(255,204,0,0.5);
+        }
+
+        /* 下半部：控制面板 */
+        #control-panel {
             flex: 1;
-            background: #1e1e24;
+            background: var(--panel-bg);
             padding: 20px;
-            display: grid;
-            grid-template-columns: 1fr 1.2fr;
-            gap: 20px;
+            display: flex; flex-direction: column; align-items: center;
             box-sizing: border-box;
-            overflow-y: auto;
         }
 
-        .mixer-section {
-            background: #2a2a32;
-            border-radius: 10px;
-            padding: 15px;
-            border: 1px solid #444;
+        .switch-group {
+            display: flex; gap: 20px; margin-top: 15px;
         }
 
-        h3 { margin: 0 0 15px 0; font-size: 14px; color: var(--cyber-blue); letter-spacing: 1px; border-bottom: 1px solid #444; padding-bottom: 5px; }
-
-        .control-row { margin-bottom: 15px; }
-        label { display: block; font-size: 12px; color: #bbb; margin-bottom: 8px; }
-
-        select, button {
-            width: 100%; padding: 10px;
-            background: #333; color: white;
-            border: 1px solid #555; border-radius: 5px;
-            cursor: pointer; font-size: 13px;
+        .switch-btn {
+            width: 70px; height: 70px;
+            border-radius: 12px; border: 3px solid #444;
+            cursor: pointer; display: flex; flex-direction: column;
+            justify-content: center; align-items: center;
+            font-weight: bold; transition: all 0.2s;
+            background: #222;
         }
 
-        .btn-group { display: flex; gap: 5px; }
-        .btn-group button.active { background: var(--accent); border-color: white; }
+        .switch-btn[data-color="R"].active { background: #800; border-color: #f00; box-shadow: 0 0 15px #f00; }
+        .switch-btn[data-color="G"].active { background: #080; border-color: #0f0; box-shadow: 0 0 15px #0f0; }
+        .switch-btn[data-color="B"].active { background: #008; border-color: #00f; box-shadow: 0 0 15px #00f; }
 
-        /* 滑桿樣式 */
-        input[type="range"] { width: 100%; accent-color: var(--cyber-blue); cursor: pointer; }
-
-        .foley-tag {
-            display: inline-block; background: #444;
-            padding: 5px 10px; border-radius: 15px;
-            font-size: 11px; margin: 3px; cursor: move;
-        }
+        #status-msg { margin-top: 20px; height: 30px; font-weight: bold; }
 
         /* 手機適應 */
-        @media (max-width: 768px) {
-            #mixer-panel { grid-template-columns: 1fr; }
-            #director-note { width: 140px; font-size: 11px; top: 10px; right: 10px; }
+        @media (max-width: 600px) {
+            .dark-room { transform: scale(0.8); }
+            .switch-btn { width: 60px; height: 60px; font-size: 14px; }
         }
     </style>
 </head>
 <body>
 
-    <div id="movie-canvas">
-        <div id="director-note">
-            📌 導演字條：<br>「請幫我配出『緊張、科幻、充滿未知』的氛圍！」
+    <div id="lab-view">
+        <div id="mission-card">
+            <div style="font-size: 12px; color: #aaa; margin-bottom: 5px;">數位修復局任務：</div>
+            <div id="mission-target">請調出「白色 (White)」</div>
         </div>
-        <div id="visual-scene">
-            <div class="rain-effect"></div>
-            <div id="running-man" style="font-size: 50px;">🏃💨</div>
-            <div style="margin-top: 20px; font-size: 12px; color: var(--cyber-blue); opacity: 0.6;">FUTURE CITY - SCENE 04</div>
+
+        <div class="dark-room">
+            <div id="light-r" class="light-beam"></div>
+            <div id="light-g" class="light-beam"></div>
+            <div id="light-b" class="light-beam"></div>
         </div>
     </div>
 
-    <div id="mixer-panel">
-        
-        <div class="mixer-section">
-            <h3>🎵 軌道控制 (Tracks)</h3>
-            <div class="control-row">
-                <label>旋律軌道 (Melody)</label>
-                <select onchange="updateSound('旋律', this.value)">
-                    <option value="none">請選擇樂器...</option>
-                    <option value="warm">溫暖木吉他</option>
-                    <option value="strings">古典交響弦樂</option>
-                    <option value="synth">冷酷電子合成器</option>
-                </select>
-            </div>
-            <div class="control-row">
-                <label>節奏軌道 (Rhythm)</label>
-                <div class="btn-group">
-                    <button onclick="setRhythm(this, '流行')">流行鼓</button>
-                    <button onclick="setRhythm(this, '心跳')">心跳聲</button>
-                    <button onclick="setRhythm(this, '賽博')">賽博鼓</button>
-                </div>
-            </div>
-            <div class="control-row">
-                <label>環境音效 (Foley - 點擊啟用)</label>
-                <div class="foley-tag" onclick="toggleFoley(this)">⚡ 打雷聲</div>
-                <div class="foley-tag" onclick="toggleFoley(this)">🚨 警笛聲</div>
-                <div class="foley-tag" onclick="toggleFoley(this)">👣 腳步聲</div>
-            </div>
+    <div id="control-panel">
+        <p style="font-size: 14px; color: #888;">控制雷射開關 (加色法實驗)</p>
+        <div class="switch-group">
+            <div class="switch-btn" data-color="R" onclick="toggleLight('R', this)">R<br>紅光</div>
+            <div class="switch-btn" data-color="G" onclick="toggleLight('G', this)">G<br>綠光</div>
+            <div class="switch-btn" data-color="B" onclick="toggleLight('B', this)">B<br>藍光</div>
         </div>
-
-        <div class="mixer-section">
-            <h3>🎛️ 聲音濾鏡 (Filters)</h3>
-            <div class="control-row">
-                <label>空間感 (Reverb) - 營造孤立感</label>
-                <input type="range" min="0" max="100" value="0" oninput="applyFilter('reverb', this.value)">
-                <div style="display: flex; justify-content: space-between; font-size: 10px; color: #666;">
-                    <span>乾燥</span><span>空曠</span>
-                </div>
-            </div>
-            <div class="control-row" style="margin-top: 20px;">
-                <label>扭曲度 (Distortion) - 營造壓迫感</label>
-                <input type="range" min="0" max="100" value="0" oninput="applyFilter('dist', this.value)">
-                <div style="display: flex; justify-content: space-between; font-size: 10px; color: #666;">
-                    <span>清澈</span><span>崩解</span>
-                </div>
-            </div>
-            <div id="live-feedback" style="margin-top: 15px; font-size: 11px; color: var(--accent); height: 20px;"></div>
-        </div>
-
+        <div id="status-msg"></div>
+        <button onclick="nextMission()" style="margin-top: 10px; background: transparent; border: 1px solid #555; color: #888; padding: 5px 15px; border-radius: 4px; cursor: pointer;">切換下個任務</button>
     </div>
 
     <script>
-        // 即時回饋邏輯
-        function updateSound(track, val) {
-            const fb = document.getElementById('live-feedback');
-            fb.innerText = `>> 已加載${val}。`;
-            setTimeout(() => fb.innerText = "", 2000);
-        }
+        const state = { R: false, G: false, B: false };
+        const missions = [
+            { name: "黃色 (Yellow)", check: () => state.R && state.G && !state.B },
+            { name: "青色 (Cyan)", check: () => !state.R && state.G && state.B },
+            { name: "洋紅色 (Magenta)", check: () => state.R && !state.G && state.B },
+            { name: "白色 (White)", check: () => state.R && state.G && state.B },
+            { name: "紅色 (Red)", check: () => state.R && !state.G && !state.B }
+        ];
+        let currentMissionIndex = 0;
 
-        function setRhythm(btn, type) {
-            const btns = btn.parentElement.querySelectorAll('button');
-            btns.forEach(b => b.classList.remove('active'));
-            btn.classList.add('active');
-            updateSound('節奏', type);
-        }
-
-        function toggleFoley(tag) {
-            tag.style.background = tag.style.background === 'var(--accent)' ? '#444' : 'var(--accent)';
-            updateSound('音效', tag.innerText);
-        }
-
-        // 聲音濾鏡連動視覺回饋
-        function applyFilter(type, val) {
-            const scene = document.getElementById('visual-scene');
-            const reverbVal = document.querySelector('input[oninput*="reverb"]').value;
-            const distVal = document.querySelector('input[oninput*="dist"]').value;
-
-            // 空間感影響模糊度，扭曲度影響對比與色差
-            scene.style.filter = `blur(${reverbVal/20}px) contrast(${100 + distVal/2}%) hue-rotate(${distVal}deg)`;
+        function toggleLight(color, btn) {
+            state[color] = !state[color];
+            btn.classList.toggle('active');
             
-            const fb = document.getElementById('live-feedback');
-            if (distVal > 80) fb.innerText = "!! 警告：聲音過載，氛圍極度壓迫 !!";
-            else if (reverbVal > 80) fb.innerText = ">> 提示：空間感極大，營造出強烈孤獨感。";
-            else fb.innerText = "";
+            // 更新視覺光束
+            document.getElementById(`light-${color.toLowerCase()}`).style.opacity = state[color] ? "1" : "0";
+            
+            checkMission();
         }
 
-        // 支援觸控與簡單拖曳模擬
-        document.addEventListener('touchstart', function() {}, false);
+        function checkMission() {
+            const mission = missions[currentMissionIndex];
+            const msg = document.getElementById('status-msg');
+            
+            if (mission.check()) {
+                msg.innerHTML = "<span style='color: #0f0;'>✓ 修復成功！色彩特徵符合。</span>";
+                setTimeout(() => {
+                    nextMission();
+                }, 1500);
+            } else {
+                msg.innerText = "";
+            }
+        }
+
+        function nextMission() {
+            currentMissionIndex = Math.floor(Math.random() * missions.length);
+            document.getElementById('mission-target').innerText = `請調出「${missions[currentMissionIndex].name}」`;
+            document.getElementById('status-msg').innerText = "";
+        }
+
+        // 初始化
+        window.onload = nextMission;
     </script>
 </body>
 </html>
