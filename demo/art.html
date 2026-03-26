@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>跨界劇場大導演 v0.1</title>
+    <style>
+        :root {
+            --primary: #00d4ff;
+            --bg-dark: #121212;
+            --panel-bg: #1e1e1e;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: var(--bg-dark);
+            color: white;
+            font-family: 'PingFang TC', 'Microsoft JhengHei', sans-serif;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* 劇場預覽區 (3D 舞台概念) */
+        #theater-view {
+            flex: 1;
+            background: radial-gradient(circle at center, #222 0%, #000 100%);
+            position: relative;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            border-bottom: 2px solid #333;
+            transition: background 0.8s ease;
+        }
+
+        #stage-floor {
+            position: absolute;
+            bottom: 10%;
+            width: 80%;
+            height: 40px;
+            background: #222;
+            transform: perspective(100px) rotateX(20deg);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+
+        #spotlight {
+            position: absolute;
+            top: -50px;
+            width: 250px;
+            height: 500px;
+            background: radial-gradient(circle, rgba(255,255,255,0.4) 0%, transparent 70%);
+            pointer-events: none;
+            transition: all 0.5s ease;
+        }
+
+        #actor {
+            position: absolute;
+            bottom: 12%;
+            font-size: 60px;
+            transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            cursor: pointer;
+            user-select: none;
+        }
+
+        /* 控制面板區 */
+        #control-panel {
+            height: 45%;
+            background: var(--panel-bg);
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            padding: 15px;
+            box-sizing: border-box;
+            overflow-y: auto;
+        }
+
+        .module {
+            background: #2a2a2a;
+            border-radius: 12px;
+            padding: 12px;
+            border: 1px solid #444;
+        }
+
+        .module h3 {
+            margin: 0 0 10px 0;
+            font-size: 14px;
+            color: var(--primary);
+            display: flex;
+            justify-content: space-between;
+        }
+
+        /* UI 元件 */
+        .control-group { margin-bottom: 10px; }
+        label { display: block; font-size: 12px; margin-bottom: 5px; color: #aaa; }
+        
+        .color-btns { display: flex; gap: 8px; }
+        .color-dot { width: 30px; height: 30px; border-radius: 50%; border: 2px solid transparent; cursor: pointer; }
+        .color-dot.active { border-color: white; }
+
+        input[type="range"] {
+            width: 100%;
+            accent-color: var(--primary);
+        }
+
+        .btn {
+            background: var(--primary);
+            color: black;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-weight: bold;
+            cursor: pointer;
+            font-size: 13px;
+        }
+
+        /* 手機適應 */
+        @media (max-width: 600px) {
+            #control-panel { grid-template-columns: 1fr; }
+            #theater-view { height: 40%; }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="theater-view">
+        <div id="stage-floor"></div>
+        <div id="spotlight"></div>
+        <div id="actor" onclick="randomAction()">👤</div>
+        <div style="position: absolute; top: 15px; left: 15px; font-size: 12px; color: #666;">
+            迷霧森林：數位劇場模擬 v0.1
+        </div>
+    </div>
+
+    <div id="control-panel">
+        
+        <div class="module">
+            <h3>🎨 視覺造境工作室</h3>
+            <label>劇本氛圍（主色調）</label>
+            <div class="color-btns">
+                <div class="color-dot" style="background: #1a2a6c;" onclick="setMood('#0d1b2a', '懸疑', '#004e92')"></div>
+                <div class="color-dot" style="background: #f12711;" onclick="setMood('#2a0a0a', '熱情', '#f12711')"></div>
+                <div class="color-dot" style="background: #00b09b;" onclick="setMood('#0a1a0a', '自然', '#96c93d')"></div>
+            </div>
+            <p id="mood-text" style="font-size: 12px; margin-top: 10px;">目前氛圍：請選擇...</p>
+        </div>
+
+        <div class="module">
+            <h3>🎵 多媒體混音臺</h3>
+            <div class="control-group">
+                <label>主旋律 (Piano/Synth)</label>
+                <input type="range" oninput="console.log('音量:', this.value)">
+            </div>
+            <div class="control-group">
+                <label>環境音 (Wind/Leaves)</label>
+                <input type="range" oninput="console.log('音量:', this.value)">
+            </div>
+        </div>
+
+        <div class="module">
+            <h3>💡 燈光與動作設計</h3>
+            <div class="control-group">
+                <label>聚光燈追蹤</label>
+                <input type="range" min="20" max="80" value="50" oninput="moveSpotlight(this.value)">
+            </div>
+            <button class="btn" onclick="moveActor()">角色走位</button>
+        </div>
+
+        <div class="module">
+            <h3>🎬 數位首演</h3>
+            <button class="btn" style="width: 100%; background: #fff;" onclick="startPremiere()">開始首演播放</button>
+            <div id="critique-box" style="margin-top: 10px; font-size: 12px; font-style: italic; color: #ddd;"></div>
+        </div>
+
+    </div>
+
+    <script>
+        let currentMood = "";
+
+        // 視覺造境邏輯
+        function setMood(bgColor, moodName, lightColor) {
+            document.getElementById('theater-view').style.background = bgColor;
+            document.getElementById('spotlight').style.background = `radial-gradient(circle, ${lightColor}66 0%, transparent 70%)`;
+            document.getElementById('mood-text').innerText = `目前氛圍：${moodName}`;
+            currentMood = moodName;
+        }
+
+        // 燈光與動作邏輯
+        function moveSpotlight(val) {
+            document.getElementById('spotlight').style.left = val + "%";
+            document.getElementById('spotlight').style.transform = `translateX(-${val}%)`;
+        }
+
+        function moveActor() {
+            const actor = document.getElementById('actor');
+            const targetPos = Math.random() * 60 + 20;
+            actor.style.left = targetPos + "%";
+        }
+
+        function randomAction() {
+            const actor = document.getElementById('actor');
+            actor.style.transform = "scale(1.2)";
+            setTimeout(() => actor.style.transform = "scale(1)", 200);
+        }
+
+        // 首演評論生成
+        function startPremiere() {
+            const critiqueBox = document.getElementById('critique-box');
+            critiqueBox.innerText = "正在首演播放中 (30秒模式)...";
+            
+            setTimeout(() => {
+                let review = "";
+                if (currentMood === "懸疑") {
+                    review = "藝評人：深藍色的基調與聚光燈的冷冽對比，成功捕捉了《迷霧森林》中的不安與疏離感。";
+                } else if (currentMood === "熱情") {
+                    review = "藝評人：強烈的色彩視覺衝擊，賦予了劇場高度的生命力與能量。";
+                } else {
+                    review = "藝評人：整體設計展現了跨領域的實驗精神，空間感掌握得恰到好處。";
+                }
+                critiqueBox.innerText = review;
+            }, 2000);
+        }
+    </script>
+</body>
+</html>
