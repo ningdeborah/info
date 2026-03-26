@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>個人視疲勞數位檢測儀 v0.1</title>
+    <style>
+        :root {
+            --primary: #007aff;
+            --bg: #f5f5f7;
+            --card: #ffffff;
+        }
+
+        body {
+            margin: 0; padding: 0; background-color: var(--bg);
+            font-family: -apple-system, "PingFang TC", sans-serif;
+            display: flex; flex-direction: column; height: 100vh; overflow: hidden;
+            touch-action: none;
+        }
+
+        /* 頂部導覽 */
+        header {
+            background: var(--card); padding: 15px; text-align: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05); z-index: 10;
+        }
+        h1 { margin: 0; font-size: 1.2rem; color: #333; }
+
+        /* 測試主體區域 */
+        #main-stage {
+            flex: 1; position: relative; overflow: hidden;
+            display: flex; justify-content: center; align-items: center;
+        }
+
+        .test-view {
+            display: none; width: 100%; height: 100%;
+            position: absolute; justify-content: center; align-items: center;
+            flex-direction: column; background: white;
+        }
+
+        .active-view { display: flex; }
+
+        /* 檢測一：調節力 */
+        #focus-area { text-align: center; padding: 20px; }
+        .micro-text { font-size: 6px; color: #444; line-height: 1.2; margin-bottom: 20px; }
+        #timer-box { font-size: 2rem; font-weight: bold; color: var(--primary); }
+
+        /* 檢測二：紅綠平衡 */
+        .duochrome-grid {
+            display: grid; grid-template-columns: 1fr 1fr; width: 100%; height: 100%;
+        }
+        .duo-half { display: flex; justify-content: center; align-items: center; font-size: 100px; font-weight: bold; }
+        .red-side { background: #ff0000; color: black; }
+        .green-side { background: #00ff00; color: black; }
+
+        /* 檢測三：對比敏感度 */
+        #contrast-grid {
+            display: grid; gap: 5px; transition: transform 0.1s ease;
+        }
+        .color-tile { width: 60px; height: 60px; border-radius: 4px; cursor: pointer; }
+
+        /* 下方控制台 */
+        footer {
+            background: var(--card); padding: 20px;
+            border-top: 1px solid #ddd; z-index: 10;
+        }
+        .btn-group { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+        .nav-btn {
+            border: 1px solid #ddd; background: white; padding: 10px 5px;
+            border-radius: 8px; font-size: 12px; cursor: pointer;
+            transition: all 0.2s;
+        }
+        .nav-btn.active { background: var(--primary); color: white; border-color: var(--primary); }
+
+        #instr-panel { margin-top: 15px; font-size: 13px; color: #666; background: #f9f9f9; padding: 10px; border-radius: 6px; }
+    </style>
+</head>
+<body>
+
+<header>
+    <h1>視疲勞自測系統 v0.1</h1>
+</header>
+
+<div id="main-stage">
+    <div id="view-welcome" class="test-view active-view">
+        <div style="font-size: 50px;">👁️</div>
+        <p style="color: #888;">請選擇下方模式開始檢測</p>
+    </div>
+
+    <div id="view-accommodation" class="test-view">
+        <div id="focus-area">
+            <div class="micro-text">
+                調節力測試文字 (Accommodation Speed Test)<br>
+                ABCDEFGHIJKLMNOPQRSTUVWXYZ<br>
+                0123456789 @#$%^&*<br>
+                小字清晰度是觀察睫狀肌收縮的關鍵
+            </div>
+            <div id="timer-box">準備開始</div>
+            <button onclick="startAccommodation()" style="margin-top:20px; padding:10px 20px;">點擊開始計時</button>
+        </div>
+    </div>
+
+    <div id="view-duochrome" class="test-view">
+        <div class="duochrome-grid">
+            <div class="duo-half red-side">E</div>
+            <div class="duo-half green-side">E</div>
+        </div>
+    </div>
+
+    <div id="view-contrast" class="test-view" style="background: #eee;">
+        <div id="contrast-grid"></div>
+    </div>
+</div>
+
+<footer>
+    <div class="btn-group">
+        <button class="nav-btn" onclick="switchTab('accommodation', this)">調節力<br>快篩</button>
+        <button class="nav-btn" onclick="switchTab('duochrome', this)">紅綠<br>平衡</button>
+        <button class="nav-btn" onclick="switchTab('contrast', this)">對比<br>敏感度</button>
+    </div>
+    <div id="instr-panel">
+        <span id="instr-text">點選上方功能按鈕開始測試。</span>
+    </div>
+</footer>
+
+<script>
+    let currentScale = 1;
+    let isDragging = false;
+    let startX, startY, moveX = 0, moveY = 0;
+
+    // 分頁切換
+    function switchTab(mode, btn) {
+        document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        document.querySelectorAll('.test-view').forEach(v => v.classList.remove('active-view'));
+        
+        const instr = document.getElementById('instr-text');
+        
+        if(mode === 'accommodation') {
+            document.getElementById('view-accommodation').classList.add('active-view');
+            instr.innerText = "先看清中間極小字，倒數結束後請迅速看 6 公尺外的目標，測試對焦恢復速度。";
+        } else if(mode === 'duochrome') {
+            document.getElementById('view-duochrome').classList.add('active-view');
+            instr.innerText = "遮住一眼，觀察哪邊的字母更清晰？若紅底較清代表眼睛過度調節（疲勞）。";
+        } else if(mode === 'contrast') {
+            document.getElementById('view-contrast').classList.add('active-view');
+            instr.innerText = "找出顏色略有不同的方塊。支援滑鼠滾輪縮放與拖曳，手機支援雙指縮放。";
+            initContrastGame();
+        }
+    }
+
+    // 檢測一邏輯
+    function startAccommodation() {
+        let count = 5;
+        const box = document.getElementById('timer-box');
+        const timer = setInterval(() => {
+            count--;
+            if(count > 0) {
+                box.innerText = count;
+            } else {
+                box.innerText = "🎬 請遠眺！";
+                box.style.color = "#ff3b30";
+                clearInterval(timer);
+            }
+        }, 1000);
+    }
+
+    // 檢測三：對比挑戰遊戲邏輯
+    function initContrastGame() {
+        const grid = document.getElementById('contrast-grid');
+        grid.innerHTML = '';
+        const size = 4;
+        const baseColor = { r: Math.random()*150+50, g: Math.random()*150+50, b: Math.random()*150+50 };
+        const diff = 12; // 難度系數
+        const targetIdx = Math.floor(Math.random() * (size * size));
+
+        grid.style.gridTemplateColumns = `repeat(${size}, 1fr)`;
+
+        for(let i=0; i<size*size; i++) {
+            const tile = document.createElement('div');
+            tile.className = 'color-tile';
+            if(i === targetIdx) {
+                tile.style.backgroundColor = `rgb(${baseColor.r + diff}, ${baseColor.g + diff}, ${baseColor.b + diff})`;
+                tile.onclick = () => { alert("找出目標！眼睛靈敏度良好。"); initContrastGame(); };
+            } else {
+                tile.style.backgroundColor = `rgb(${baseColor.r}, ${baseColor.g}, ${baseColor.b})`;
+            }
+            grid.appendChild(tile);
+        }
+    }
+
+    // 縮放與拖曳邏輯 (PC & Mobile)
+    const stage = document.getElementById('main-stage');
+    const contrastGrid = document.getElementById('contrast-grid');
+
+    stage.addEventListener('wheel', (e) => {
+        e.preventDefault();
+        currentScale += e.deltaY * -0.001;
+        currentScale = Math.min(Math.max(.5, currentScale), 3);
+        updateTransform();
+    }, {passive: false});
+
+    stage.addEventListener('mousedown', (e) => {
+        isDragging = true;
+        startX = e.clientX - moveX;
+        startY = e.clientY - moveY;
+    });
+
+    window.addEventListener('mousemove', (e) => {
+        if(!isDragging) return;
+        moveX = e.clientX - startX;
+        moveY = e.clientY - startY;
+        updateTransform();
+    });
+
+    window.addEventListener('mouseup', () => isDragging = false);
+
+    // 手機觸控縮放模擬
+    let initialDist = 0;
+    stage.addEventListener('touchstart', (e) => {
+        if(e.touches.length === 2) {
+            initialDist = Math.hypot(e.touches[0].pageX - e.touches[1].pageX, e.touches[0].pageY - e.touches[1].pageY);
+        }
+    });
+
+    stage.addEventListener('touchmove', (e) => {
+        if(e.touches.length === 2) {
+            const dist = Math.hypot(e.touches[0].pageX - e.touches[1].pageX, e.touches[0].pageY - e.touches[1].pageY);
+            currentScale *= (dist / initialDist);
+            initialDist = dist;
+            updateTransform();
+        }
+    });
+
+    function updateTransform() {
+        contrastGrid.style.transform = `translate(${moveX}px, ${moveY}px) scale(${currentScale})`;
+    }
+</script>
+
+</body>
+</html>
