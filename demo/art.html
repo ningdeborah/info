@@ -3,224 +3,208 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>跨界劇場大導演 v0.1</title>
+    <title>一擊入魂：情境配樂大師 v0.1</title>
     <style>
         :root {
-            --primary: #00d4ff;
-            --bg-dark: #121212;
-            --panel-bg: #1e1e1e;
+            --accent: #ff0055;
+            --cyber-blue: #00f2ff;
+            --bg: #0a0a0c;
         }
 
         body {
-            margin: 0;
-            padding: 0;
-            background-color: var(--bg-dark);
+            margin: 0; padding: 0;
+            background-color: var(--bg);
             color: white;
-            font-family: 'PingFang TC', 'Microsoft JhengHei', sans-serif;
-            display: flex;
-            flex-direction: column;
-            height: 100vh;
-            overflow: hidden;
+            font-family: 'PingFang TC', sans-serif;
+            display: flex; flex-direction: column;
+            height: 100vh; overflow: hidden;
         }
 
-        /* 劇場預覽區 (3D 舞台概念) */
-        #theater-view {
-            flex: 1;
-            background: radial-gradient(circle at center, #222 0%, #000 100%);
+        /* 上半部：視覺任務區 */
+        #movie-canvas {
+            flex: 1.2;
             position: relative;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            border-bottom: 2px solid #333;
-            transition: background 0.8s ease;
+            background: #111;
+            display: flex; justify-content: center; align-items: center;
+            overflow: hidden;
+            border-bottom: 3px solid #333;
         }
 
-        #stage-floor {
-            position: absolute;
-            bottom: 10%;
-            width: 80%;
-            height: 40px;
-            background: #222;
-            transform: perspective(100px) rotateX(20deg);
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        #visual-scene {
+            width: 100%; height: 100%;
+            background: linear-gradient(45deg, #1a1a2e 0%, #16213e 100%);
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+            transition: filter 0.3s ease;
         }
 
-        #spotlight {
-            position: absolute;
-            top: -50px;
-            width: 250px;
-            height: 500px;
-            background: radial-gradient(circle, rgba(255,255,255,0.4) 0%, transparent 70%);
-            pointer-events: none;
-            transition: all 0.5s ease;
+        .rain-effect {
+            position: absolute; width: 100%; height: 100%;
+            background: repeating-linear-gradient(transparent, transparent 95%, rgba(255,255,255,0.1) 100%);
+            animation: rain 0.2s infinite linear;
         }
 
-        #actor {
-            position: absolute;
-            bottom: 12%;
-            font-size: 60px;
-            transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            cursor: pointer;
-            user-select: none;
+        @keyframes rain { from { transform: translateY(0); } to { transform: translateY(20px); } }
+
+        #director-note {
+            position: absolute; top: 20px; right: 20px;
+            background: #f1c40f; color: #000;
+            padding: 10px 15px; width: 180px;
+            transform: rotate(2deg);
+            box-shadow: 5px 5px 15px rgba(0,0,0,0.5);
+            font-weight: bold; font-size: 13px;
+            z-index: 10;
         }
 
-        /* 控制面板區 */
-        #control-panel {
-            height: 45%;
-            background: var(--panel-bg);
+        /* 下半部：互動混音台 */
+        #mixer-panel {
+            flex: 1;
+            background: #1e1e24;
+            padding: 20px;
             display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 10px;
-            padding: 15px;
+            grid-template-columns: 1fr 1.2fr;
+            gap: 20px;
             box-sizing: border-box;
             overflow-y: auto;
         }
 
-        .module {
-            background: #2a2a2a;
-            border-radius: 12px;
-            padding: 12px;
+        .mixer-section {
+            background: #2a2a32;
+            border-radius: 10px;
+            padding: 15px;
             border: 1px solid #444;
         }
 
-        .module h3 {
-            margin: 0 0 10px 0;
-            font-size: 14px;
-            color: var(--primary);
-            display: flex;
-            justify-content: space-between;
+        h3 { margin: 0 0 15px 0; font-size: 14px; color: var(--cyber-blue); letter-spacing: 1px; border-bottom: 1px solid #444; padding-bottom: 5px; }
+
+        .control-row { margin-bottom: 15px; }
+        label { display: block; font-size: 12px; color: #bbb; margin-bottom: 8px; }
+
+        select, button {
+            width: 100%; padding: 10px;
+            background: #333; color: white;
+            border: 1px solid #555; border-radius: 5px;
+            cursor: pointer; font-size: 13px;
         }
 
-        /* UI 元件 */
-        .control-group { margin-bottom: 10px; }
-        label { display: block; font-size: 12px; margin-bottom: 5px; color: #aaa; }
-        
-        .color-btns { display: flex; gap: 8px; }
-        .color-dot { width: 30px; height: 30px; border-radius: 50%; border: 2px solid transparent; cursor: pointer; }
-        .color-dot.active { border-color: white; }
+        .btn-group { display: flex; gap: 5px; }
+        .btn-group button.active { background: var(--accent); border-color: white; }
 
-        input[type="range"] {
-            width: 100%;
-            accent-color: var(--primary);
-        }
+        /* 滑桿樣式 */
+        input[type="range"] { width: 100%; accent-color: var(--cyber-blue); cursor: pointer; }
 
-        .btn {
-            background: var(--primary);
-            color: black;
-            border: none;
-            padding: 8px 12px;
-            border-radius: 6px;
-            font-weight: bold;
-            cursor: pointer;
-            font-size: 13px;
+        .foley-tag {
+            display: inline-block; background: #444;
+            padding: 5px 10px; border-radius: 15px;
+            font-size: 11px; margin: 3px; cursor: move;
         }
 
         /* 手機適應 */
-        @media (max-width: 600px) {
-            #control-panel { grid-template-columns: 1fr; }
-            #theater-view { height: 40%; }
+        @media (max-width: 768px) {
+            #mixer-panel { grid-template-columns: 1fr; }
+            #director-note { width: 140px; font-size: 11px; top: 10px; right: 10px; }
         }
     </style>
 </head>
 <body>
 
-    <div id="theater-view">
-        <div id="stage-floor"></div>
-        <div id="spotlight"></div>
-        <div id="actor" onclick="randomAction()">👤</div>
-        <div style="position: absolute; top: 15px; left: 15px; font-size: 12px; color: #666;">
-            迷霧森林：數位劇場模擬 v0.1
+    <div id="movie-canvas">
+        <div id="director-note">
+            📌 導演字條：<br>「請幫我配出『緊張、科幻、充滿未知』的氛圍！」
+        </div>
+        <div id="visual-scene">
+            <div class="rain-effect"></div>
+            <div id="running-man" style="font-size: 50px;">🏃💨</div>
+            <div style="margin-top: 20px; font-size: 12px; color: var(--cyber-blue); opacity: 0.6;">FUTURE CITY - SCENE 04</div>
         </div>
     </div>
 
-    <div id="control-panel">
+    <div id="mixer-panel">
         
-        <div class="module">
-            <h3>🎨 視覺造境工作室</h3>
-            <label>劇本氛圍（主色調）</label>
-            <div class="color-btns">
-                <div class="color-dot" style="background: #1a2a6c;" onclick="setMood('#0d1b2a', '懸疑', '#004e92')"></div>
-                <div class="color-dot" style="background: #f12711;" onclick="setMood('#2a0a0a', '熱情', '#f12711')"></div>
-                <div class="color-dot" style="background: #00b09b;" onclick="setMood('#0a1a0a', '自然', '#96c93d')"></div>
+        <div class="mixer-section">
+            <h3>🎵 軌道控制 (Tracks)</h3>
+            <div class="control-row">
+                <label>旋律軌道 (Melody)</label>
+                <select onchange="updateSound('旋律', this.value)">
+                    <option value="none">請選擇樂器...</option>
+                    <option value="warm">溫暖木吉他</option>
+                    <option value="strings">古典交響弦樂</option>
+                    <option value="synth">冷酷電子合成器</option>
+                </select>
             </div>
-            <p id="mood-text" style="font-size: 12px; margin-top: 10px;">目前氛圍：請選擇...</p>
+            <div class="control-row">
+                <label>節奏軌道 (Rhythm)</label>
+                <div class="btn-group">
+                    <button onclick="setRhythm(this, '流行')">流行鼓</button>
+                    <button onclick="setRhythm(this, '心跳')">心跳聲</button>
+                    <button onclick="setRhythm(this, '賽博')">賽博鼓</button>
+                </div>
+            </div>
+            <div class="control-row">
+                <label>環境音效 (Foley - 點擊啟用)</label>
+                <div class="foley-tag" onclick="toggleFoley(this)">⚡ 打雷聲</div>
+                <div class="foley-tag" onclick="toggleFoley(this)">🚨 警笛聲</div>
+                <div class="foley-tag" onclick="toggleFoley(this)">👣 腳步聲</div>
+            </div>
         </div>
 
-        <div class="module">
-            <h3>🎵 多媒體混音臺</h3>
-            <div class="control-group">
-                <label>主旋律 (Piano/Synth)</label>
-                <input type="range" oninput="console.log('音量:', this.value)">
+        <div class="mixer-section">
+            <h3>🎛️ 聲音濾鏡 (Filters)</h3>
+            <div class="control-row">
+                <label>空間感 (Reverb) - 營造孤立感</label>
+                <input type="range" min="0" max="100" value="0" oninput="applyFilter('reverb', this.value)">
+                <div style="display: flex; justify-content: space-between; font-size: 10px; color: #666;">
+                    <span>乾燥</span><span>空曠</span>
+                </div>
             </div>
-            <div class="control-group">
-                <label>環境音 (Wind/Leaves)</label>
-                <input type="range" oninput="console.log('音量:', this.value)">
+            <div class="control-row" style="margin-top: 20px;">
+                <label>扭曲度 (Distortion) - 營造壓迫感</label>
+                <input type="range" min="0" max="100" value="0" oninput="applyFilter('dist', this.value)">
+                <div style="display: flex; justify-content: space-between; font-size: 10px; color: #666;">
+                    <span>清澈</span><span>崩解</span>
+                </div>
             </div>
-        </div>
-
-        <div class="module">
-            <h3>💡 燈光與動作設計</h3>
-            <div class="control-group">
-                <label>聚光燈追蹤</label>
-                <input type="range" min="20" max="80" value="50" oninput="moveSpotlight(this.value)">
-            </div>
-            <button class="btn" onclick="moveActor()">角色走位</button>
-        </div>
-
-        <div class="module">
-            <h3>🎬 數位首演</h3>
-            <button class="btn" style="width: 100%; background: #fff;" onclick="startPremiere()">開始首演播放</button>
-            <div id="critique-box" style="margin-top: 10px; font-size: 12px; font-style: italic; color: #ddd;"></div>
+            <div id="live-feedback" style="margin-top: 15px; font-size: 11px; color: var(--accent); height: 20px;"></div>
         </div>
 
     </div>
 
     <script>
-        let currentMood = "";
-
-        // 視覺造境邏輯
-        function setMood(bgColor, moodName, lightColor) {
-            document.getElementById('theater-view').style.background = bgColor;
-            document.getElementById('spotlight').style.background = `radial-gradient(circle, ${lightColor}66 0%, transparent 70%)`;
-            document.getElementById('mood-text').innerText = `目前氛圍：${moodName}`;
-            currentMood = moodName;
+        // 即時回饋邏輯
+        function updateSound(track, val) {
+            const fb = document.getElementById('live-feedback');
+            fb.innerText = `>> 已加載${val}。`;
+            setTimeout(() => fb.innerText = "", 2000);
         }
 
-        // 燈光與動作邏輯
-        function moveSpotlight(val) {
-            document.getElementById('spotlight').style.left = val + "%";
-            document.getElementById('spotlight').style.transform = `translateX(-${val}%)`;
+        function setRhythm(btn, type) {
+            const btns = btn.parentElement.querySelectorAll('button');
+            btns.forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            updateSound('節奏', type);
         }
 
-        function moveActor() {
-            const actor = document.getElementById('actor');
-            const targetPos = Math.random() * 60 + 20;
-            actor.style.left = targetPos + "%";
+        function toggleFoley(tag) {
+            tag.style.background = tag.style.background === 'var(--accent)' ? '#444' : 'var(--accent)';
+            updateSound('音效', tag.innerText);
         }
 
-        function randomAction() {
-            const actor = document.getElementById('actor');
-            actor.style.transform = "scale(1.2)";
-            setTimeout(() => actor.style.transform = "scale(1)", 200);
-        }
+        // 聲音濾鏡連動視覺回饋
+        function applyFilter(type, val) {
+            const scene = document.getElementById('visual-scene');
+            const reverbVal = document.querySelector('input[oninput*="reverb"]').value;
+            const distVal = document.querySelector('input[oninput*="dist"]').value;
 
-        // 首演評論生成
-        function startPremiere() {
-            const critiqueBox = document.getElementById('critique-box');
-            critiqueBox.innerText = "正在首演播放中 (30秒模式)...";
+            // 空間感影響模糊度，扭曲度影響對比與色差
+            scene.style.filter = `blur(${reverbVal/20}px) contrast(${100 + distVal/2}%) hue-rotate(${distVal}deg)`;
             
-            setTimeout(() => {
-                let review = "";
-                if (currentMood === "懸疑") {
-                    review = "藝評人：深藍色的基調與聚光燈的冷冽對比，成功捕捉了《迷霧森林》中的不安與疏離感。";
-                } else if (currentMood === "熱情") {
-                    review = "藝評人：強烈的色彩視覺衝擊，賦予了劇場高度的生命力與能量。";
-                } else {
-                    review = "藝評人：整體設計展現了跨領域的實驗精神，空間感掌握得恰到好處。";
-                }
-                critiqueBox.innerText = review;
-            }, 2000);
+            const fb = document.getElementById('live-feedback');
+            if (distVal > 80) fb.innerText = "!! 警告：聲音過載，氛圍極度壓迫 !!";
+            else if (reverbVal > 80) fb.innerText = ">> 提示：空間感極大，營造出強烈孤獨感。";
+            else fb.innerText = "";
         }
+
+        // 支援觸控與簡單拖曳模擬
+        document.addEventListener('touchstart', function() {}, false);
     </script>
 </body>
 </html>
