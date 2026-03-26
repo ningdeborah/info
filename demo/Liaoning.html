@@ -1,218 +1,102 @@
 <!DOCTYPE html>
 <html lang="zh-Hant">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>說明文件檢視工具</title>
-  <style>
-    :root {
-      --bg:#050608;
-      --panel:#10141b;
-      --muted:#a0a4ad;
-      --text:#e5e7eb;
-      --brand:#a5d68a;
-      --brand-2:#8fc36f;
-      --accent:#a5d68a;
-    }
-    body {
-      margin:0;
-      min-height:100vh;
-      font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Noto Sans TC",sans-serif;
-      background:
-        radial-gradient(1200px 500px at 80% -50%, rgba(165,214,138,.22), transparent 60%),
-        radial-gradient(900px 450px at -10% 0%, rgba(148,163,184,.18), transparent 60%),
-        var(--bg);
-      color:var(--text);
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      padding:24px;
-      box-sizing:border-box;
-    }
-    .shell {
-      width:100%;
-      max-width:1100px;
-      background:linear-gradient(180deg,rgba(15,23,42,.96),rgba(3,7,18,.98));
-      border-radius:24px;
-      border:1px solid rgba(255,255,255,.08);
-      box-shadow:0 22px 50px rgba(0,0,0,.7);
-      padding:22px 22px 18px;
-      display:flex;
-      flex-direction:column;
-      gap:18px;
-    }
-    header {
-      display:flex;
-      flex-wrap:wrap;
-      gap:12px;
-      justify-content:space-between;
-      align-items:baseline;
-    }
-    h1 {
-      margin:0;
-      font-size:clamp(22px,3vw,26px);
-      letter-spacing:.03em;
-    }
-    .tagline {
-      margin:0;
-      font-size:14px;
-      color:var(--muted);
-    }
-    .badge {
-      padding:4px 10px;
-      border-radius:999px;
-      border:1px solid rgba(165,214,138,.6);
-      color:var(--accent);
-      font-size:11px;
-      text-transform:uppercase;
-      letter-spacing:.14em;
-      white-space:nowrap;
-    }
-    main {
-      background:#050814;
-      border-radius:18px;
-      border:1px solid rgba(148,163,184,.22);
-      padding:16px;
-      display:grid;
-      gap:16px;
-    }
-    @media(min-width:900px){
-      main {
-        grid-template-columns: minmax(0,1.2fr) minmax(0,1fr);
-      }
-    }
-    .panel-title {
-      font-size:15px;
-      font-weight:600;
-      margin-bottom:6px;
-      color:#e5e7eb;
-    }
-    .panel-desc {
-      font-size:13px;
-      color:var(--muted);
-      margin-bottom:10px;
-    }
-    .back-link {
-      text-align:right;
-      font-size:12px;
-      color:var(--muted);
-    }
-    .back-link a {
-      color:var(--accent);
-      text-decoration:none;
-    }
-    .back-link a:hover {
-      text-decoration:underline;
-    }
-    .pill {
-      display:inline-flex;
-      align-items:center;
-      gap:6px;
-      padding:4px 8px;
-      border-radius:999px;
-      border:1px solid rgba(148,163,184,.4);
-      font-size:11px;
-      color:var(--muted);
-      margin-right:6px;
-      margin-bottom:4px;
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>海城縣尋根地圖 v0.1</title>
+    
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    
+    <style>
+        body { margin: 0; padding: 0; font-family: -apple-system, sans-serif; }
+        #map { height: 100vh; width: 100vw; }
+        
+        /* GPS 按鈕樣式 */
+        .gps-button {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            z-index: 1000;
+            background: white;
+            padding: 10px;
+            border-radius: 50%;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+            cursor: pointer;
+            width: 44px;
+            height: 44px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+        }
+
+        .info-panel {
+            position: absolute;
+            top: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 1000;
+            background: rgba(255, 255, 255, 0.9);
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: bold;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            pointer-events: none;
+        }
+    </style>
 </head>
 <body>
-<div class="shell">
-  <header>
-    <div>
-      <h1>說明文件檢視工具</h1>
-      <p class="tagline">貼上 Markdown 文字，左邊編輯、右邊預覽。</p>
-    </div>
-    <div class="badge">Tool · Markdown</div>
-  </header>
-  <main>
 
-    <section>
-      <div class="panel-title">Markdown 編輯區</div>
-      <p class="panel-desc">
-        在左邊貼上簡單的 Markdown，例如課程大綱、實驗步驟、作業說明。右側會產生對應的預覽。
-        這裡只支援最基本的標題、粗體、斜體與清單示意。
-      </p>
-      <textarea id="mdInput" style="width:100%;min-height:260px;border-radius:12px;border:1px solid rgba(148,163,184,.35);background:#020617;color:#e5e7eb;padding:10px 12px;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:13px;resize:vertical;">
-# 實驗：植物葉片的蒸散作用
+    <div class="info-panel">海城縣：甯家村探訪 (v0.1)</div>
+    <div id="map"></div>
+    <div class="gps-button" onclick="locateUser()">📍</div>
 
-## 實驗目的
-- 觀察葉片的蒸散現象  
-- 練習控制變因
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
-## 步驟摘要
-1. 準備兩盆同種植物  
-2. 一盆放在陽光下，一盆放在陰影  
-3. 隔一段時間記錄土壤重量及葉片狀態
+    <script>
+        // 1. 初始化地圖：設定在海城縣附近座標
+        // 座標說明：海城縣大致位置為 40.85, 122.75
+        var map = L.map('map', {
+            center: [40.85, 122.75],
+            zoom: 13,
+            zoomControl: false // 手機版建議隱藏，用手勢操作
+        });
 
-> 小提示：可讓學生預測哪一盆水分消耗較快。
-      </textarea>
-    </section>
-    <section>
-      <div class="panel-title">預覽區</div>
-      <p class="panel-desc">
-        預覽結果只是示意版，真正上課可以改用你慣用的 Markdown 轉換器套件。
-      </p>
-      <div id="mdPreview" style="min-height:260px;border-radius:12px;border:1px solid rgba(148,163,184,.35);background:#050814;padding:14px 16px;font-size:14px;line-height:1.7;overflow:auto;"></div>
-      <div style="margin-top:8px;">
-        <span class="pill">適合寫教學講義草稿</span>
-      </div>
-    </section>
+        // 2. 設定圖資 (使用 OpenStreetMap)
+        // 註：離線地圖通常需要預先下載 Tile 檔案，此處使用瀏覽器快取機制
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 19,
+            attribution: '© OpenStreetMap'
+        }).addTo(map);
 
-  </main>
-  <div class="back-link">
-    ⬅︎ <a href="../index.html">回入口 LAB ENTRANCE</a>
-  </div>
-</div>
+        // 3. 標示甯家村 (座標需根據實際位置微調)
+        var ningVillage = L.marker([40.88, 122.80]).addTo(map);
+        ningVillage.bindPopup("<b>甯家村</b><br>拜訪每家每戶計劃起始點").openPopup();
+
+        // 4. GPS 定位功能
+        function locateUser() {
+            map.locate({setView: true, maxZoom: 16});
+        }
+
+        function onLocationFound(e) {
+            var radius = e.accuracy / 2;
+            L.marker(e.latlng).addTo(map)
+                .bindPopup("您當前在此範圍內 (" + radius.toFixed(1) + " 公尺)").openPopup();
+            L.circle(e.latlng, radius).addTo(map);
+        }
+
+        function onLocationError(e) {
+            alert("無法取得您的位置: " + e.message);
+        }
+
+        map.on('locationfound', onLocationFound);
+        map.on('locationerror', onLocationError);
+
+        // 5. 支援電腦與行動裝置操作
+        // Leaflet 預設已支援滑鼠滾輪與雙指縮放
+        L.control.zoom({ position: 'topright' }).addTo(map);
+
+    </script>
 </body>
 </html>
-
-<script>
-(function(){
-  const input = document.getElementById("mdInput");
-  const preview = document.getElementById("mdPreview");
-  if(!input || !preview) return;
-
-  function escapeHtml(str){
-    return str.replace(/[&<>]/g, s=>({ '&':'&amp;','<':'&lt;','>':'&gt;' }[s]));
-  }
-
-  function simpleMarkdown(text){
-    let html = escapeHtml(text);
-
-    // 標題
-    html = html.replace(/^###### (.+)$/gm,"<h6>$1</h6>");
-    html = html.replace(/^##### (.+)$/gm,"<h5>$1</h5>");
-    html = html.replace(/^#### (.+)$/gm,"<h4>$1</h4>");
-    html = html.replace(/^### (.+)$/gm,"<h3>$1</h3>");
-    html = html.replace(/^## (.+)$/gm,"<h2>$1</h2>");
-    html = html.replace(/^# (.+)$/gm,"<h1>$1</h1>");
-
-    // 粗體與斜體
-    html = html.replace(/\*\*(.+?)\*\*/g,"<strong>$1</strong>");
-    html = html.replace(/\*(.+?)\*/g,"<em>$1</em>");
-
-    // 引用
-    html = html.replace(/^> (.+)$/gm,'<blockquote style="margin:0 0 8px 0;border-left:3px solid #a5d68a;padding-left:10px;color:#a0a4ad;">$1</blockquote>');
-
-    // 清單
-    html = html.replace(/^(?:- |\* )(.*(?:\n(?:- |\* ).*)*)/gm, m=>{
-      const items = m.split(/\n/).map(l=>l.replace(/^(?:- |\* )/,"").trim()).filter(Boolean);
-      return "<ul>" + items.map(i=>"<li>"+i+"</li>").join("") + "</ul>";
-    });
-
-    // 行內換行
-    html = html.replace(/\n{2,}/g,"</p><p>");
-    html = "<p>" + html + "</p>";
-    return html;
-  }
-
-  function update(){
-    preview.innerHTML = simpleMarkdown(input.value);
-  }
-  input.addEventListener("input", update);
-  update();
-})();
-</script>
